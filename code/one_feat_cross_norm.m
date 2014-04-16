@@ -1,4 +1,4 @@
-function [pos neg] = one_feat_cross(k)
+function [pos neg] = one_feat_cross_norm(k)
 	%k = k folds
 %{
 	Positives are:
@@ -33,13 +33,13 @@ function [pos neg] = one_feat_cross(k)
 %	positive = ;
 %	negative = ;
 
-	positive = load('data/sortedData/Iris.psd.mat');
-	negative = load('data/sortedData/Rose.psd.mat');
+	positive = load('data/sortedData/Iris.norm.mat');
+	negative = load('data/sortedData/Rose.norm.mat');
 
 	%normalize?
 
-	pos_size = size(positive.psd,1);
-	neg_size = size(negative.psd,1);
+	pos_size = size(positive.norm,1);
+	neg_size = size(negative.norm,1);
 
 	all_pos_indices = 1:pos_size;
 	all_neg_indices = 1:neg_size;
@@ -47,16 +47,12 @@ function [pos neg] = one_feat_cross(k)
 	total_pos_rate = zeros(k,1);
 	total_neg_rate = zeros(k,1);
 
-	pos_size
-	neg_size
 	parfor i=1:k
 		pos_test = all_pos_indices(mod(all_pos_indices,k) == (i-1));
 		pos_train = all_pos_indices(mod(all_pos_indices,k) ~= (i-1));
 		neg_test = all_neg_indices(mod(all_neg_indices,k) == (i-1));
 		neg_train = all_neg_indices(mod(all_neg_indices,k) ~= (i-1));
-		[pos_rate neg_rate] = one_feat(positive.psd, negative.psd,pos_test,pos_train,neg_test,neg_train);
-	%	pos_rate
-	%	neg_rate
+		[pos_rate neg_rate] = one_feat(positive.norm, negative.norm,pos_test,pos_train,neg_test,neg_train);
 		total_pos_rate(i) = pos_rate*(size(pos_test,2)/pos_size(1));
 		total_neg_rate(i) = neg_rate*(size(neg_test,2)/neg_size(1));
 	end
@@ -66,8 +62,8 @@ end
 
 function [pos_r neg_r] = one_feat(positive, negative, pos_test, pos_train, neg_test, neg_train)
 
-	train_size = 10000;
-	test_size = 1000;
+	train_size = 20000;
+	test_size = 2000;
 
 
 	pos_train_feats = [];
@@ -86,7 +82,7 @@ function [pos_r neg_r] = one_feat(positive, negative, pos_test, pos_train, neg_t
 
 	%only using first 10 for testing
 	key = [repmat(1,length(pos_train(1:train_size)),1); repmat(0,length(neg_train(1:train_size)),1)];
-	trained_svm = svmtrain([pos_train_feats; neg_train_feats],key);
+	trained_svm = svmtrain([pos_train_feats; neg_train_feats],key,'kktviolationlevel',0.05,'kernel_function','rbf');
     
    	pos_r = 0;
 	neg_r = 0; 

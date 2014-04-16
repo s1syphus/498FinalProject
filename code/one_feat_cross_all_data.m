@@ -1,4 +1,4 @@
-function [pos neg] = one_feat_cross(k)
+function [pos neg] = one_feat_cross_all_data(k)
 	%k = k folds
 %{
 	Positives are:
@@ -47,8 +47,6 @@ function [pos neg] = one_feat_cross(k)
 	total_pos_rate = zeros(k,1);
 	total_neg_rate = zeros(k,1);
 
-	pos_size
-	neg_size
 	parfor i=1:k
 		pos_test = all_pos_indices(mod(all_pos_indices,k) == (i-1));
 		pos_train = all_pos_indices(mod(all_pos_indices,k) ~= (i-1));
@@ -66,17 +64,13 @@ end
 
 function [pos_r neg_r] = one_feat(positive, negative, pos_test, pos_train, neg_test, neg_train)
 
-	train_size = 10000;
-	test_size = 1000;
-
-
 	pos_train_feats = [];
-	for i = pos_train(1:train_size)
+	for i = pos_train(1:end)
 		pos_train_feats = [pos_train_feats; positive(i,:)];
 	end
 %	pos_train_feats
 	neg_train_feats = [];
-	for i = neg_train(1:train_size)
+	for i = neg_train(1:end)
 		neg_train_feats = [neg_train_feats; negative(i,:)];
 	end
 %	neg_train_feats
@@ -85,19 +79,19 @@ function [pos_r neg_r] = one_feat(positive, negative, pos_test, pos_train, neg_t
 
 
 	%only using first 10 for testing
-	key = [repmat(1,length(pos_train(1:train_size)),1); repmat(0,length(neg_train(1:train_size)),1)];
+	key = [repmat(1,length(pos_train),1); repmat(0,length(neg_train),1)];
 	trained_svm = svmtrain([pos_train_feats; neg_train_feats],key);
     
    	pos_r = 0;
 	neg_r = 0; 
    
-	for i = pos_test(1:test_size)
+	for i = pos_test(1:end)
 		if(svmclassify(trained_svm, positive(i,:)) == 1)
 			pos_r = pos_r + 1;
 		end
 	end 
     
-    	for i = neg_test(1:test_size)
+    	for i = neg_test(1:end)
 		if(svmclassify(trained_svm, negative(i,:)) == 0)
 			neg_r = neg_r + 1;
 		end

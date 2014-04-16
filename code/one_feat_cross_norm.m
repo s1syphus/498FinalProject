@@ -62,8 +62,8 @@ end
 
 function [pos_r neg_r] = one_feat(positive, negative, pos_test, pos_train, neg_test, neg_train)
 
-	train_size = 20000;
-	test_size = 2000;
+	train_size = 10000;
+	test_size = 1000;
 
 
 	pos_train_feats = [];
@@ -80,9 +80,8 @@ function [pos_r neg_r] = one_feat(positive, negative, pos_test, pos_train, neg_t
 
 
 
-	%only using first 10 for testing
 	key = [repmat(1,length(pos_train(1:train_size)),1); repmat(0,length(neg_train(1:train_size)),1)];
-	trained_svm = svmtrain([pos_train_feats; neg_train_feats],key,'kktviolationlevel',0.05,'kernel_function','rbf');
+	trained_svm = svmtrain([pos_train_feats; neg_train_feats],key,'kktviolationlevel',0.05,'boxconstraint',0.1,'kernel_function','rbf');
     
    	pos_r = 0;
 	neg_r = 0; 

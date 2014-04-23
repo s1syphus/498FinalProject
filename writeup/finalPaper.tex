@@ -46,7 +46,7 @@
 
 \usepackage{fixltx2e}
 \usepackage{caption}
-\usepackage{subcaption}
+%\usepackage{subcaption}
 
 \usepackage{titlesec} % Allows customization of titles
 \renewcommand\thesection{\Roman{section}}
@@ -90,8 +90,10 @@
 
 \begin{abstract}
 
-
-
+	Parkinson's disease is a prevalent chronic neurological disease that can be recognized by the severe
+motor system disorders that it causes. An early detection system would be beneficial to diagnose people
+early in order to maximize their quality of life. A system was created that utilizes exclusively audio
+data which allows for lightweight implementations to be created on such platforms as smartphones and personal computers.
  
 \end{abstract}
 
@@ -103,328 +105,239 @@
 
 \section{Introduction}
 
-\lettrine[nindent=0em,lines=3]{W} ikipedia is a collaborative, multilingual, open, online 
-encyclopedia. Launched on January 15, 2001 by Jimmy Wales and Larry Sanger 
-Wikipedia has grown exponentially over the years with the English Wikipedia containing 
-over 4.4 million articles and has an estimated 365 million readers annually. \cite{Wikipedia}
-Bolstered by these impressive statistics, wikipedia has a very real claim of containing 
-nearly the sum total of written human knowledge. Due to the success of the English language
-wikipedia hundreds of other languages have spawned their own versions of wikipedia
-based on the same foundations.\\
+\lettrine[nindent=0em,lines=3]{P} arkinson's disease is a debilitating and neurological disorder that is manifested primarily
+through motor system disorders but later on in the disease progression psychiatric symptoms such as
+dementia and depression can occur. One million Americans and 7-10 million worldwide are affected by
+this disease with approximately 60,000 new diagnoses every year (in the United States). This is more
+than the combined number of people affected by multiple sclerosis, muscular dystrophy and Lou
+Gehrig's disease. Diagnosis of this disease is a growing research area as it can be difficult to distinguish
+Parkinson's from other neurological diseases such as Alzheimer's.
+There is currently no cure for Parkinson's disease, however there are many treatments that a patient can receive
+that will drastically improve the quality of life. Therefore early detection of this disease is crucial to
+help patients until a cure is found.\\
+Previous research has been done in order to design systems for early detection but have relied exclusively 
+on accelerometer and similar data. This is a logical choice when examining Parkinson's but is limited
+in the ease of implementing this system at wide scales. An audio-based system would be preferred for early
+detection as it can be easily implemented on a variety of platforms.
 
-The ability of anyone and everyone to edit Wikipedia is both its greatest strength
-and its greatest weakness. The benefit is that experts from all over the world can
-edit and update articles in their speciality, allowing articles to be always be up-to-date 
-and complete. The downside is the possibility of vandalism. However, there are many
-volunteers who keep track of page edits and will quickly revert them if vandalism is 
-detected. In addition a 2005 investigation by Nature showed that the science articles 
-had a level of accuracy similar to that of Encyclopaedia Britannica. \cite{Nature}
+\section{Data}
 
-\vfill
-\columnbreak
-
-In order to analyze this vast, complex web of data a graph theory technique of
-strongly connected components will be utilized. Strongly connected components are
-defined as a maximal set of vertices from a directed graph {\it  G} = ({\it  V},{\it E})
-where every pair of vertices within the set can are reachable from each other. \cite{Cormen}
-Finding strongly connected components within the
-directed graph of wikipedia internal page links will allow the structure to be 
-uncovered. Finding the strongly connected components will allow identification of
-the main nodes of knowledge.\\
-
-In order to find the strongly connected components, after creating the directed graph,
-Kosaraju's Algorithm will be utilized. This algorithm uses the transpose of {\it  G} = ({\it  V},{\it E}),
-a directed graph, which is defined as {\it  G \textsuperscript{T}} = ({\it  V},{\it E\textsuperscript{T}}). 
-This creates what is essentially the same graph but with the directions of the edges reversed.
-The generation of the transpose graph allows the strongly connected components
-to be computed in linear time using two depth-first searches. The pseudocode for 
-the algorithm is as follows: \cite{Cormen}\\
-
-\newpage
-
-Stongly-Connected-Components({\it G})
-
-\begin{enumerate}
-
-\item call DFS({\it G}) to compute finishing times {\it u.f} for each vertex {\it u}
-
-\item compute {\it G \textsuperscript{T}}
-
-\item call DFS({\it G \textsuperscript{T}}), but in the main loop of DFS, consider the vertices
-in order of decreasing {\it u.f} (as computed in step 1)
-
-\item output the vertices of each tree in the depth-first forest formed in line 3 as a seperate
-strongly connected component
-
-\end{enumerate}
-
-Kosaraju's algorithm is linear-time as the time to create the transpose of {\it G} is
-linear in time as well as the two depth-first search passes. This allows for relatively fast
-execution time which is needed when working with such large data sets. There are faster
-algorithms in practice such as Tarjan's strongly connected components algorithm which only performs
-one graph traversal, however,  Kosaraju's is much simpler to implement.
-
+The Michael J. Fox Foundation for Parkinson's Research has collected and opened up a large
+database of mobile phone data collected from healthy adults as well as those with different stages of
+Parkinson's. Using mobile phone data which uses a variety of sensors to collect data could lead to early
+detection of this disease as it primarily manifests through motor system disorders which can be
+registered through speech and motor patterns. The data contains data from audio, accelerometry,
+compass, ambient light, proximity, battery level and GPS streams. The data was recorded every minute
+in one hour increments during waking hours. The study lasted for 8 weeks. There were 16 participants in the study,
+9 diagnosed with Parkinson's and 7 controls.\\
+This dataset has been analyzed in the past but the focus was on the accelerometry and GPS data. 
+This project is looking exclusively at the audio data as it has not been examined in the past. 
+The audio data provided contains several features such as L1-norm, L2-norm, L-inf norm,
+power spectral density across four separate bands, 12 lowest mel-frequency cepstral coefficients.
+The data was provided in csv format and seperated by subject and day.
+Due to the vast amount of data (on the order of 200,000 data-points) the data was averaged over each day (for
+each subject). This reduces the data to a manageable level in order to be used for machine learning.
 
 
 %------------------------------------------------
 
 \section{Methods}
 
-In order to analyze Wikipedia effectively an offline version was required. There are datadumps
-and backups taken every couple of weeks for all of the different wikipedias which are available
- to the public for download. The backups consist of a large xml file that constains all of the articles
- as well as internal and external links within the articles. No images are included but are available for download
- as well, however for this project images wererequired. The xml file for the full English wikipedia is on the order of
- 44 gigabytes. The major computational hurdle is the resolving the internal links within a wikipedia, using a 3rd party tool
-(described below) the full English wikipedia took roughly 16 hours while running on a 6-core machine with 32
-GB of RAM. A machine of this calibre was not available to the author. 
-Due to these computational limits, smaller wikipedia versions were chosen, namely the Korean, Esperanto, Danish,
-Hindi, and Simple English wikipedias. The sizes  (by article count)  of these different wikipedias as well as the English Language 
-wikipedia are shown in Table 1.
-By choosing smaller wikipedia versions we can (relatively) quickly and easily compare 
-the structure of knowledge of the same format between different languages. The multilingual
-wikipedias chosen are complete enough to provide useful information while being practically computable.
-
-\begin{tablehere}
-
-\caption{The Size of Different Wikipedias  \cite{wikipediaStatistics}}
-
-\begin{tabular}{| l | l |}
-
-\hline
-
-Wikipedia & \parbox[t]{3cm} {Article Count \\ (thousands)}   \\ \hline
-
-English & 4,400 \\ \hline
-
-Korean & 254 \\ \hline
-
-Esperanto & 188  \\ \hline
-
-Danish & 183 \\ \hline
-
-Hindi & 100 \\ \hline
-
-Simple English & 97  \\ \hline
-
-\end{tabular}
-
-\end{tablehere}
-
-\vspace{10 mm}
-
-The raw data from the xml file is not suitable to creating a directed graph. The internal links must be resolved
-in order to show what other pages you can reach from any given page. In order to accomplish this a 3rd party tool
-was utilized. Evgeniy Gabrilovich created a tool named wikiprep for his Doctoral thesis work on "Feature Generation for Textual
-Information Retrieval Using World Knowledge." \cite{Gabrilovich} Wikiprep parses the xml dump and resolves the internal
-links as well as many other tasks that are irrelevant for this project. The new, extended xml file generated
-by wikiprep was then parsed and the link information extracted.\\
-
-Using the link information generated by wikiprep a directed graph can be constructed. The links information
-contains the node, the article, and its corresponding edges, links to other pages. This graph was 
-created using a program written in C++ and stored internally, displaying the graph would not provide
-useful context to this examination. Using Kosaraju's algorithm on the created directed graph produced 
-a set of strongly connected components. The list of strongly connected
-components was reduced by removing all components that consisted of a single node, this occurs
-when a node is not part of a strongly connected component, every node is inherently a strongly connected
-component by itself.
-Removing the singular components does not influence the analysis as nodes linking to themselves are not useful or
-interesting in this examination.\\
-
-After the list of strongly connected components was created the size of the components was then found.
-Examining the contents of the components would not provide useful contex for this project. Finding the
-size of the compenents allows finding the number of components of a similar size. This allows the overall
-network structure to be seen as it shows the number of small, medium and large strongly connected
-components within wikipedia. This elucidates the overall structure showing many large, more centralized
-nodes with more smaller, less connected components on the outskirts.\\
-
-After the sizes of the strongly connected components was determined the lists were then
-processed using MATLAB in order to generate a histogram of size frequency. This illustrates the
-number of similarily sized nodes within the network.
-
-Note: All code used by this project can be found on my github at \url{https://github.com/s1syphus/ComplexSystems511FinalProject}
+In order to classify data into Parkinson's or not Parkinson's a support vector machine was utilized.
+This machine learning technique is ideal for this type of problem because it is simply a binary 
+classification. Support vector machines work by projecting the training data into a higher dimension in 
+order to seperate it using a hyperplane. The hyperplane is defined as follows:\\ 
+$f(x) = w^T \phi (x) + b$\\ \\
+where $w$ is the margin or seperation between the two classes and $f(x)>0$ implies $y = 1$
+and $f(x) <0$ implies $y = -1$ and $x$ and $y$ are the two classes.\\ 
+To create good seperation the support vector machine attempts to maximize
+the margin. This is achieved by using Lagrange multipliers as shown in the following equation.\\ 
+$L(w,b,a) = \frac{1}{2} || w||^2 - \sum \limits_{n=1} ^{N} \alpha_n [ y_n (w \cdot x_n -b) -1 ] $\\
+Support vector machines rely on the kernel in order to seperate the data after it has been projected. There are many
+different types of kernels that perform differently depending on the dataset. Common kernels include linear, quadratic,
+other polynomials and radial basis functions. Only linear and radial basis functions were examined as kernels in
+this project.
+Support vector machines work well if there is not miss-classified data or
+outliers. However, outlying data points can make it extremely difficult for support vector machines to find
+the correct seperating hyperplane. The support vector machine may not find the hyperplane at all as it has to project
+to such a high dimension that computational resources are exhausted. Another, potentially more serious, problem
+is that a hyperplane may be found but overfits the data, it is so complicated that it is useless when classifying testing data.
+In order to alleviate this problem a "soft margin" term can be used which allows for outliers in the
+data (but penalizes them). This is implemented by using the following equation:\\ 
+$C \sum \limits_{n=1} ^{N} \xi _n + \frac{1}{2} || w ||^2$\\ \\
+In order to maximize the available data, and to prevent overfitting, $k$-folds cross-validation is used.
+This technique seperates the data in $k-1$ training samples and $k$ testing samples. This process is
+repeated $k$ times in order for all of the available data to be used for both training and testing.\\
+The data was first imported into MATLAB and averaged over each day in order to reduce the number of observations
+to allow the support vector machine to function better. The data was seperated into three
+different matrices, the power spectral density values, the energy values, and the Mel-frequency cepstral coefficients.
+These were the different features used to train and test the support vector machines.
+Two different groups were created, those with Parkinson's disease (positive)
+and the controls (negative). 10-fold cross-validation was implemented using a MATLAB function that
+provided indices. The support vector machine used for the classification was implemented using MATLAB
+and then tuned using parameter sweeping over possible soft margin values and either linear or radial basis function
+kernels. The rates for each pass of the cross-validation were weighted appropriately and summed to get
+an overall rate.
 
 %------------------------------------------------
 
-\end{multicols}
 
-\newpage
+
+
 
 \section{Results}
 
-%histogram data of the size of strongly connected components
-%raw data
-
-\begin{table}[h]
-
-\caption{The Frequency of the Size of Strongly Connected Components within Different Wikipedias}
-\centering
-
-\begin{tabular}{| l | l | l | l | l | l |  l | l | l | l | l | l | }
-
-\hline
-
-Wikipedia & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & {11 - 20} & >20 \\ \hline
-
-Korean & 725 & 198 & 68 & 24 & 9 & 5 & 8 & 2 & 8 & 6 & 1 \\ \hline
-
-Esperanto & 428 & 91 & 31 & 13 & 5 & 1 & 4 & 4 & 5 & 4 & 2 \\ \hline
-
-Danish & 725 & 114 & 34 & 26 & 6 & 4 & 1 & 1 & 4 & 2 & 1 \\ \hline
-
-Hindi & 282 & 62 & 20 & 8 & 2 & 4 & 0 & 1 & 5  & 5 & 2 \\ \hline
-
-Simple English & 293  & 62 & 20 & 10 & 9 & 3 & 3 & 1 & 4 & 3 & 1 \\ \hline
-
-
+The classification rates when examining the Power Spectral Density feature
+compared to the soft margin parameter when using a linear kernel is as follows:\\ \\
+\begin{tabular}{|c|c|c|}
+	\hline
+	Soft Margin 	& Positive Rate & Negative Rate \\ \hline
+	0.1		& 0.9378	& 0.3216 \\ \hline
+	0.2		& 0.9270	& 0.3351 \\ \hline
+	0.3		& 0.9135	& 0.3405 \\ \hline
+	0.4		& 0.9081	& 0.3486\\ \hline
+	0.5		& 0.8973	& 0.3649\\ \hline
+	0.6		& 0.9000	& 0.3757\\ \hline
+	0.7		& 0.8919	& 0.3676\\ \hline
+	0.8		& 0.8892	& 0.3757\\ \hline
+	0.9		& 0.8811	& 0.3865\\ \hline
+	1.0		& 0.8892	& 0.3811 \\ \hline
 \end{tabular}
 
-\end{table}
-
-\begin{table}[h]
-
-\caption{The Normalized Frequency (percentage) of the Size of Strongly Connected Components within Different Wikipedias}
-
-\centering
-
-\begin{tabular}{| l | l | l | l | l | l |  l | l | l | l | l | l | }
-
-\hline
-
-Wikipedia & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & {11 - 20} & >20 \\ \hline
-
-Korean & 68.79 & 18.79 & 6.45 & 2.28 & 0.85 & 0.47 & 0.76 & 0.19 & 0.76 & 0.57 & 0.09 \\ \hline
-
-Esperanto & 72.79 & 15.48 & 5.27 & 2.21 & 0.85 & 0.17 & 0.68 & 0.68 & 0.85 & 0.68 & 0.34 \\ \hline
-
-Danish & 78.98 & 12.42 & 3.70 & 2.83 & 0.65 & 0.44 & 0.11 & 0.11 & 0.44 & 0.22 & 0.11 \\ \hline
-
-Hindi & 72.12 & 15.86 & 5.11 & 2.05 & 0.51 & 1.02 & 0 & 0.26 & 1.28  & 1.28 & 0.51 \\ \hline
-
-Simple English & 71.64  & 15.16 & 4.89 & 2.45 & 2.2 & 0.73 & 0.73 & 0.24 & 0.98 & 0.73 & 0.24 \\ \hline
-
+The classification rates when examining the Power Spectral Density feature
+compared to the soft margin parameter when using a radial basis function kernel is as follows:\\ \\
+\begin{tabular}{|c|c|c|}
+	\hline
+	Soft Margin 	& Positive Rate & Negative Rate \\ \hline
+	0.1		& 0.8919	& 0.3514 \\ \hline
+	0.2		& 0.8197	& 0.4554 \\ \hline
+	0.3		& 0.8468	& 0.4635 \\ \hline
+	0.4		& 0.8487	& 0.4702\\ \hline
+	0.5		& 0.8541	& 0.4720\\ \hline
+	0.6		& 0.8611	& 0.4810\\ \hline
+	0.7		& 0.8557	& 0.4953\\ \hline
+	0.8		& 0.8522	& 0.4957\\ \hline
+	0.9		& 0.8649	& 0.4918\\ \hline
+	1.0		& 0.8630	& 0.5008 \\ \hline
 \end{tabular}
 
-\end{table}
 
 
-\begin{table}[h]
-\centering
+\vfill
+\columnbreak
 
-\caption{Relative Size (percentage) of the Largest Strongly Connected Component in Different Wikipedias \\
-	Note: Percentage based on Article count from a different month}
 
-\begin{tabular}{| l | l |}
 
-\hline
-
-Wikipedia & Relative Size (percentage)   \\ \hline
-
-Korean & 107.68 \\ \hline
-
-Esperanto &  95.05  \\ \hline
-
-Danish &  85.30 \\ \hline
-
-Hindi & 34.32 \\ \hline
-
-Simple English & 85.41  \\ \hline
-
+The classification rates when examining the energy feature
+compared to the soft margin parameter when using a linear kernel is as follows:\\ \\
+\begin{tabular}{|c|c|c|}
+	\hline
+	Soft Margin 	& Positive Rate & Negative Rate \\ \hline
+	0.1		& 0.6360	& 0.6197 \\ \hline
+	0.2		& 0.6719	& 0.6090 \\ \hline
+	0.3		& 0.6936	& 0.6072 \\ \hline
+	0.4		& 0.6936	& 0.6035\\ \hline
+	0.5		& 0.6902	& 0.6123\\ \hline
+	0.6		& 0.6920	& 0.6145\\ \hline
+	0.7		& 0.6881	& 0.6181\\ \hline
+	0.8		& 0.6885	& 0.6163\\ \hline
+	0.9		& 0.6902	& 0.6269\\ \hline
+	1.0		& 0.6881	& 0.6144 \\ \hline
 \end{tabular}
 
-\end{table}
-
-\begin{figurehere}
-	\centering
-	\includegraphics[width=0.5\textwidth]{histogramKo.jpg}
-	\caption{Histogram of Frequency of Strongly Connected Component Size for Korean Wikipedia}
-	\label{fig:histogramKo}
-\end{figurehere}
 
 
-\begin{figurehere}
-	\centering
-	\includegraphics[width=0.5\textwidth]{histogramEo.jpg}
-	\caption{Histogram of Frequency of Strongly Connected Component Size for Esperanto Wikipedia}
-	\label{fig:histogramEo}
-\end{figurehere}
 
-\begin{figurehere}
-	\centering
-	\includegraphics[width=0.5\textwidth]{histogramDa.jpg}
-	\caption{Histogram of Frequency of Strongly Connected Component Size for Danish Wikipedia}
-	\label{fig:histogramDa}
-\end{figurehere}
+The classification rates when examining the energy feature
+compared to the soft margin parameter when using a radial basis kernel is as follows:\\ \\
+\begin{tabular}{|c|c|c|}
+	\hline
+	Soft Margin 	& Positive Rate & Negative Rate \\ \hline
+	0.1		& 0.7907	& 0.4761 \\ \hline
+	0.2		& 0.7765	& 0.4776 \\ \hline
+	0.3		& 0.7801	& 0.4921 \\ \hline
+	0.4		& 0.7820	& 0.4917\\ \hline
+	0.5		& 0.7857	& 0.4953\\ \hline
+	0.6		& 0.7785	& 0.4993\\ \hline
+	0.7		& 0.7838	& 0.4972\\ \hline
+	0.8		& 0.7782	& 0.5066\\ \hline
+	0.9		& 0.7819	& 0.5007\\ \hline
+	1.0		& 0.7804	& 0.5079 \\ \hline
+\end{tabular}
 
+\newpage
+The classification rates when examining the Mel-frequency cepstrum coefficients feature
+compared to the soft margin parameter when using a linear kernel is as follows:\\ \\
+\begin{tabular}{|c|c|c|}
+	\hline
+	Soft Margin 	& Positive Rate & Negative Rate \\ \hline
+	0.1		& 0.8167	& 0.7512 \\ \hline
+	0.2		& 0.8158	& 0.7623 \\ \hline
+	0.3		& 0.8225	& 0.7784 \\ \hline
+	0.4		& 0.8099	& 0.7678\\ \hline
+	0.5		& 0.0	& 0.0\\ \hline
+	0.6		& 0.0 	& 0.0\\ \hline
+	0.7		& 0.0 	& 0.0\\ \hline
+	0.8		& 0.0 	& 0.0\\ \hline
+	0.9		& 0.0	& 0.0\\ \hline
+	1.0		& 0.0	& 0.0 \\ \hline
+\end{tabular}
+The classification rates when examining the Mel-frequency cepstrum coefficients feature
+compared to the soft margin parameter when using a radial basis kernel is as follows:\\ \\
+\begin{tabular}{|c|c|c|}
+	\hline
+	Soft Margin 	& Positive Rate & Negative Rate \\ \hline
+	0.1		& 0.8774	& 0.7477 \\ \hline
+	0.2		& 0.9079	& 0.7670 \\ \hline
+	0.3		& 0.9295	& 0.7944 \\ \hline
+	0.4		& 0.9301	& 0.8006\\ \hline
+	0.5		& 0.9076	& 0.8287\\ \hline
+	0.6		& 0.9026	& 0.8327\\ \hline
+	0.7		& 0.9196	& 0.8488\\ \hline
+	0.8		& 0.9082	& 0.8596\\ \hline
+	0.9		& 0.9129	& 0.8602\\ \hline
+	1.0		& 0.9187	& 0.8421 \\ \hline
+\end{tabular}
 
-\begin{figurehere}
-	\centering
-	\includegraphics[width=0.5\textwidth]{histogramHi.jpg}
-	\caption{Histogram of Frequency of Strongly Connected Component Size for Hindi Wikipedia}
-	\label{fig:histogramHi}
-\end{figurehere}
+\end{multicols}
 
-
-\begin{figurehere}
-	\centering
-	\includegraphics[width=0.5\textwidth]{histogramSE.jpg}
-	\caption{Histogram of Frequency of Strongly Connected Component Size for Simple English Wikipedia}
-	\label{fig:histogramSE}
-
-\end{figurehere}
-
-
+A graph of each feature after parameter optimization using both kernels is as follows:\\
+\begin{center}
+\includegraphics[scale=0.9]{accuracy_rates.png}
+\end{center}
 %------------------------------------------------
 
-\begin{multicols}{2} % Two-column layout throughout the main article text
+\newpage
+\begin{multicols}{2}
 
-\section{Discussion}
+\section{Discussion and Further Study}
 
-The results shown above provide an interesting picture to emerge about the structures of the 
-
-
-
-\section{Further Study}
-
-Analyzing the five small-to-average sized wikipedias in this project yielded interesting results
+As seen in the results the overall accuracy rates were quite varied, some features
+performed quite well while others did poorly. The power-spectral-density had a high positive
+accuracy rate but an extremely low negative accuracy rate for both the linear and the radial
+basis function kernels. The energy feature had better negative accuracy rates but low 
+positive accuracy rates. The energy feature had a stark difference when using the linear
+kernel compared to the radial basis kernel for negative accuracy rates. The Mel-frequency cepstrum
+coefficients had the best classification rates, a respectable 91\% positive rate and 86\%
+negative rate. This is quite good and shows promise for further study.\\
+Overall the data did show good positive classification rates when using the Mel-frequency cepstrum
+coefficients as well as the power spectal density features. However, the power-spectral density feature had
+quite low negative classification rates. This is not acceptable when making a real-world system
+as false-negatives should be minimized, people should not be told they are not at risk for Parkinson's
+when they are. This contrasts to false-positives where people are told they might have Parkinson's and
+then do not. This type of error is acceptable as it is easy to catch with further testing while
+false-negatives are not.\\
+A better classification system could potentially be developed that combined the three
+feature types together and weighted them appropriately. The audio data classification system could
+also be combined with an accelerometer based system in order to increase accuracy. In addition, while 
+outside of the available dataset other audio features could be examined. Raw audio was not available
+when developing this system but different audio data could be collected and analyzed in the future.
 
 
 
 \end{multicols}
 
 
-
-%----------------------------------------------------------------------------------------
-%	REFERENCE LIST
-%----------------------------------------------------------------------------------------
-
-\begin{thebibliography}{99} % Bibliography - this is intentionally simple in this template
-
-\bibitem{Wikipedia} "Wikipedia." {\em Wikipedia.}
-		Web. 19 Dec 2013. <\url{http://en.wikipedia.org/wiki/Wikipedia}>.
-	
-\bibitem{Nature} "Internet Encyclopedias Go Head to Head." {\em Nature}
-		(15 Dec 2005). <\url{http://www.nature.com/nature/journal/v438/n7070/full/438900a.html}>.
-
-\bibitem{Gabrilovich} "Wikipedia Preprocessor (Wikiprep)."
-	(2 November 2010). <\url{http://www.cs.technion.ac.il/~gabr/resources/code/wikiprep/}>.
-
-\bibitem{Cormen} "Cormen, T., Stein, C., Rivest, R., and Leserson, C." (2009).
-	 {\em Introduction to Algorithms.} (3rd ed).
-	
-\bibitem{Parallel} "Hong, S., Rodia, N., and Olukotun, K." (2013).
-	{\em Technical report: On fast parallel detection of strongly connected components (scc) in small-world graphs}.
-	(Pervasive Parallelism Laboratory, Stanford University, Stanford, CA).
-	Retrieved from <\url{http://ppl.stanford.edu/papers/techreport2013_hong.pdf}>.
-	
-\bibitem{wikipediaStatistics} "Wikipedia Statistics." {\em Wikipedia Statistics.}
-		Web. 20 Dec 2013. <\url{http://stats.wikimedia.org/EN/TablesArticlesTotal.htm}>.
-
-
-
-\end{thebibliography}
-
-%----------------------------------------------------------------------------------------
 
 
 
